@@ -18,7 +18,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-W -Wall -O3")
 set(CMAKE_C_FLAGS_RELEASE "-W -Wall -O3")
 
 #if you don't want the full compiler output, remove the following line
-set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_VERBOSE_MAKEFILE OFF)
 
 set(Boost_USE_MULTITHREADED ON)
 find_package(Boost 1.42.0 COMPONENTS thread REQUIRED )
