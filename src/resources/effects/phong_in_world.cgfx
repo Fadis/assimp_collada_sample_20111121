@@ -1,0 +1,52 @@
+// phong shading in world space
+
+uniform float3 camera_position;
+uniform float fog_distance = 10.0;
+uniform float ambient_light = 0.1;
+
+void testVertexShader (
+  float4 local_position : ATTR0,
+  float3 local_normal : ATTR1,
+  out float4 view_position : POSITION,
+  out float4 world_position : TEXCOORD0,
+  out float3 world_normal : TEXCOORD2
+) {
+  world_position = mul( glstate.matrix.modelview[ 0 ], local_position );
+  view_position = mul( glstate.matrix.projection, world_position );
+  world_normal = normalize( mul( (float3x3)glstate.matrix.modelview[ 0 ], local_normal ) );
+}
+
+void testFragmentShader (
+  float4 world_position : TEXCOORD0,
+  float3 world_normal : TEXCOORD2,
+  out float4 pixel_color : COLOR0
+) {
+  world_normal = normalize( world_normal );
+
+  float3 world_eyedir = - camera_position + world_position.xyz;
+
+  float3 world_lightdir = glstate.light[0].position.xyz - world_position.xyz;
+
+  float3 world_lightdir_normalized = normalize( world_lightdir );
+
+  float diffuse_light_level = max( dot( world_normal, world_lightdir_normalized ), 0.0 );
+
+  float3 world_eyedir_normalized = normalize( world_eyedir );
+  float3 world_reflection = reflect( world_lightdir_normalized, world_normal );
+  float specular_light_level = pow( max( dot( world_eyedir_normalized, world_reflection ), 0 ), 20.0 );
+  if( diffuse_light_level == 0.0 ) {
+    specular_light_level = 0.0;
+  }
+  float light_distance = fog_distance / pow( length( world_lightdir ), 2.0 );
+  float light_level = ambient_light + min( diffuse_light_level, 1.0 ) * light_distance + specular_light_level * light_distance;
+  float3 final_color = float3( light_level );
+  pixel_color = float4( final_color, 1.0 );
+}
+
+technique Basic {
+  pass p0 {
+    VertexProgram = compile vp40 testVertexShader();
+    FragmentProgram = compile fp40 testFragmentShader();
+  }
+}
+
